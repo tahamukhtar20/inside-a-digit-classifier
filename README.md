@@ -1,6 +1,12 @@
 # Inside a Digit Classifier
 
-Draw a digit, then take apart the small convolutional network reading it, live, in your browser:
+Draw a digit, then take a guided tour through the small convolutional network reading it. Pick one of three ways in, step through it one idea at a time, guess what it will say, and only then see its answer:
+
+- **Follow the signal.** Your pixels become 784 numbers, then strokes (layer 1), parts (layer 2), 64 features, and finally votes for ten digits, with animated flows showing the strongest connections on your drawing.
+- **Read its mind.** Probes ask what each layer knows before it answers: is there a closed loop, which way does it lean, how thick is the pen, which digit is it.
+- **Try to break it.** See the handful of units its decision rests on, switch them off, and find out whether you changed its mind.
+
+For free exploration there's also a **full lab** (`lab.html`) with everything on one page:
 
 - **Where it looks.** SmoothGrad, saliency, gradient × input and Grad-CAM, for any digit or for the difference between two ("why 3 rather than 8?").
 - **Inside the network.** Every filter in both convolution layers and all 64 hidden units, updating as you draw. Click any of them to see the input that excites it most and the MNIST digits that do.
@@ -37,9 +43,10 @@ Everything runs client-side with [TensorFlow.js](https://www.tensorflow.org/js).
 training/train.py           Trains the CNN (PyTorch) and exports weights to web/model/weights.json
 training/export_samples.py  Exports 100 MNIST test digits for the "Random MNIST digit" button
 training/analysis.py        Feature visualisation, top dataset examples and linear probes -> web/model/insights.json
-web/index.html, style.css   The page
+web/index.html, journey.js  The guided tour (journey.css on top of style.css)
+web/lab.html, lab.js        The full lab
+web/common.js               Drawing pad, preprocessing, concept measures, small canvas helpers
 web/model.js                The network rebuilt from TensorFlow.js ops: attributions, ablation masks, circuits, probe readouts
-web/app.js                  Drawing, preprocessing, rendering, inspector, circuit graph, probe table
 ```
 
 ## Running locally

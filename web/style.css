@@ -819,3 +819,8 @@ h1 {
     grid-template-columns: 1fr;
   }
 }
+
+.back-tour {
+  margin-left: 0.6rem;
+  font: 700 0.9rem var(--head);
+}
