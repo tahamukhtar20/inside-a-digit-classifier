@@ -141,7 +141,6 @@ function drawScreen() {
   const s = el("section", { class: "draw-wrap" });
   s.innerHTML = `
     <div class="reveal-in">
-      <p class="eyebrow">${icon("scan-eye", 15)} An interpretability tour</p>
       <h1>Draw a digit. Then look inside the network reading it.</h1>
       <p class="say">A small neural network will read your drawing. Before it tells you what it thinks, you'll follow
       what happens inside it, step by step. The answer comes last.</p>
@@ -205,9 +204,7 @@ function chooseScreen(exclude = null) {
   const s = el("section");
   s.innerHTML = `
     <div class="reveal-in">
-      <p class="eyebrow">${icon("check", 15)} Your drawing is in</p>
       <h1>How do you want to look inside?</h1>
-      <p class="say">Each way tells a different story about the same drawing. You can try the others afterwards.</p>
     </div>
     <div class="paths">
       ${pathCard("signal", "activity", "Follow the signal", "Watch your pixels turn into strokes, then parts, then features, layer by layer, until it decides.", "5 steps")}
@@ -245,9 +242,9 @@ function stepScreen() {
   const j = JOURNEYS[app.journey];
   const total = j.steps.length + 1;
   const s = el("section", { class: "step" });
-  const { eyebrow, title, say, visual, how, next } = j.steps[app.step]();
+  const { title, say, visual, how, next } = j.steps[app.step]();
   s.innerHTML = `
-    <div class="reveal-in"><p class="eyebrow">${icon(j.icon, 15)} ${j.title} · step ${app.step + 1} of ${j.steps.length}</p>
+    <div class="reveal-in">
       <h2 class="step-title">${title}</h2><p class="say">${say}</p></div>`;
   const v = el("div", { class: "visual" });
   v.append(visual);
@@ -261,7 +258,6 @@ function stepScreen() {
   nav.append(back, fwd);
   s.append(nav);
   show(s, { dots: { total, at: app.step } });
-  void eyebrow;
 }
 
 // ----- Follow the signal -----
@@ -294,7 +290,7 @@ function signal1() {
   later(() => countUp(n, 784, 1400), 300);
   return {
     title: "First, your drawing becomes numbers",
-    say: `The network never sees your strokes. It sees a 28 × 28 grid of brightness values, <b>784 numbers</b>, and <b>${inked}</b> of them carry ink. Everything that follows is arithmetic on these numbers.`,
+    say: `The network never sees your strokes. It sees a 28 × 28 grid of brightness values, <b>784 numbers</b>, and <b>${inked}</b> of them carry ink.`,
     visual: box,
     how: "The drawing is cropped to the ink, scaled so its longer side is 20 pixels, and centred by its centre of mass on a 28 × 28 grid, the same way the MNIST training digits were prepared.",
   };
@@ -518,7 +514,7 @@ function mind1() {
   const firstSure = sure.findIndex((s) => s >= 0.9);
   return {
     title: "Does it notice a closed loop?",
-    say: `${yes ? "Your digit has a closed loop (highlighted)." : "Your digit has no closed loop."} The network was never told what a loop is. But we trained a simple <b>probe</b> on each layer to read the answer straight out of its activations. ${firstSure > 0 ? `Raw pixels only manage a guess; by <b>${LAYERS[firstSure].toLowerCase()}</b> it's ${Math.round(sure[firstSure] * 100)}% sure.` : firstSure === 0 ? "Even the raw pixels give it away here." : "This drawing fools the probes; loops are easier to read on neater digits."}`,
+    say: `${yes ? "Your digit has a closed loop (highlighted)." : "Your digit has no closed loop."} The network was never told what a loop is. But we trained a simple <b>probe</b> on each layer to read the answer straight out of its activations. ${firstSure > 0 ? `From raw pixels the probe is ${Math.round(sure[0] * 100)}% sure; from <b>${LAYERS[firstSure].toLowerCase()}</b>, ${Math.round(sure[firstSure] * 100)}%.` : firstSure === 0 ? `Here even the raw pixels are enough (${Math.round(sure[0] * 100)}%).` : "On this drawing no layer is confident; loops are easier to read on neater digits."}`,
     visual: mindLayout(left, right),
     how: "A probe is a logistic regression trained on 12,000 MNIST digits' activations at one layer, with the label computed from the image (a background region fully enclosed by ink). On 3,000 held-out digits it's right 78% of the time from raw pixels and 93% from layer 2.",
   };
@@ -565,7 +561,7 @@ function mind3() {
   return {
     title: "Does it care how thick your pen was?",
     say: forgets
-      ? `Early on, yes: layers 1 and 2 track stroke thickness well (R² ${Math.max(scores[1], scores[2]).toFixed(2)} across 3,000 test digits). By the hidden layer it has mostly <b>thrown it away</b> (R² ${scores[3].toFixed(2)}). Thickness doesn't help name a digit, so the network stops carrying it. That's what learning a good representation looks like.`
+      ? `Early on, yes: layers 1 and 2 track stroke thickness well (R² ${Math.max(scores[1], scores[2]).toFixed(2)} across 3,000 test digits). By the hidden layer it has mostly <b>thrown it away</b> (R² ${scores[3].toFixed(2)}). Thickness doesn't help name a digit, so the network stops carrying it.`
       : `Every layer keeps track of stroke thickness, even though it doesn't help name the digit.`,
     visual: mindLayout(left, right),
     how: "Thickness is 2 × inked area ÷ perimeter of the ink (in pixels of the 28 × 28 grid). The probes are ridge regressions; the R² values come from 3,000 held-out MNIST digits, not just your drawing.",
@@ -690,7 +686,7 @@ function break2() {
   later(update, 50);
   return {
     title: "Now switch them off",
-    say: `Click a card to switch that unit off, as if it had never learned anything. The ring shows how sure it still is of its <b>original</b> answer. See if you can make it <b>change its mind</b>. Most networks are surprisingly robust; try the layer-2 filters too.`,
+    say: `Click a card to switch that unit off. The ring shows how sure it still is of its <b>original</b> answer. See if you can make it <b>change its mind</b>. If it holds, try the layer-2 filters too.`,
     visual: wrap,
     how: "Switching a unit off multiplies its output by zero everywhere (an ablation). The network is re-run in your browser on every click. The bars under each card show how much that unit pushed towards the original answer.",
     next: "Reveal its answer",
@@ -705,7 +701,7 @@ function revealScreen() {
   const final = ablated ? analyse(app.model, app.data.px, app.data.predicted, null, { masks: app.masks }) : app.data.r;
   const said = argmax(final.probs);
   const s = el("section");
-  s.innerHTML = `<p class="eyebrow">${icon("sparkles", 15)} The network says…</p><div class="drum"><span></span><span></span><span></span></div>`;
+  s.innerHTML = `<div class="drum"><span></span><span></span><span></span></div>`;
   show(s, { dots: { total: j.steps.length + 1, at: j.steps.length } });
 
   setTimeout(() => {
@@ -745,9 +741,9 @@ function revealScreen() {
       pad.clear();
       drawScreen();
     });
-    next.append(again, el("a", { class: "btn btn-plain", href: "lab.html" }, `${icon("flask-conical")} Open the full lab`));
+    next.append(again);
 
-    s.replaceChildren(el("p", { class: "eyebrow" }, `${icon("sparkles", 15)} The network says`), a, next);
+    s.replaceChildren(a, next);
     later(() => s.querySelectorAll(".mini-bar .f").forEach((f) => (f.style.width = `${f.dataset.w}%`)), 400);
   }, 1300);
 }
@@ -755,7 +751,6 @@ function revealScreen() {
 // ---------- go ----------
 
 document.querySelector(".jbrand").insertAdjacentHTML("afterbegin", icon("scan-eye", 18) + " ");
-document.querySelector(".jlink").innerHTML = `${icon("flask-conical", 16)} Full lab`;
 $("redraw").innerHTML = `${icon("pen-line", 13)} Redraw`;
 
 drawScreen();

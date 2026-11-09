@@ -1,10 +1,9 @@
-// Shared by the guided journey (journey.js) and the full lab (lab.js): the drawing pad,
-// MNIST-style preprocessing, small drawing helpers and the concept measures used by the probes.
+// The drawing pad, MNIST-style preprocessing, small canvas helpers and the concept measures
+// used by the probes.
 
 export const argmax = (a) => a.reduce((best, v, i) => (v > a[best] ? i : best), 0);
 export const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 export const pct = (p) => `${(p * 100).toFixed(p > 0.995 ? 0 : 1)}%`;
-export const sigmoid = (z) => 1 / (1 + Math.exp(-z));
 export const fromB64 = (s) => Uint8ClampedArray.from(atob(s), (c) => c.charCodeAt(0));
 
 /** Indices of the k largest values by magnitude (non-zero only). */
@@ -147,12 +146,6 @@ export function grayCanvas(values, size = 28) {
   for (let i = 0; i < size * size; i++) img.data.set([values[i], values[i], values[i], 255], i * 4);
   ctx.putImageData(img, 0, 0);
   return c;
-}
-
-export function blank(canvas) {
-  const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
 /** One channel of a channels-last activation as ink on paper (strong = dark). */

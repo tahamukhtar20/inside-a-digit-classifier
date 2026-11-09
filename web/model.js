@@ -73,17 +73,12 @@ export function analyse(model, pixels, target, versus = null, { smooth = false, 
       const noise = tf.randomNormal([copies, 28, 28, 1], 0, 0.15, "float32", 7); // fixed seed: stable maps
       smoothGrad = tf.mean(gradOf(tf.add(tf.tile(x, [copies, 1, 1, 1]), noise)), 0);
     }
-    // Grad-CAM: weight each second-layer feature map by its average gradient.
-    const gradA2 = tf.grad((a) => score(head(W, M, a).logits))(a2);
-    const cam = tf.image.resizeBilinear(tf.relu(tf.sum(tf.mul(a2, tf.mean(gradA2, [1, 2], true)), 3, true)), [28, 28]);
 
     return {
       probs: tf.softmax(logits).dataSync().slice(),
       logits: logits.dataSync().slice(),
       saliency: gradInput.dataSync().slice(),
       smoothgrad: smoothGrad ? smoothGrad.dataSync().slice() : null,
-      gradTimesInput: tf.mul(gradInput, x).dataSync().slice(),
-      gradcam: cam.dataSync().slice(),
       conv1: a1.dataSync().slice(), // 28*28*8, channels last
       conv2: a2.dataSync().slice(), // 14*14*16, channels last
       hidden: hidden.dataSync().slice(), // 64

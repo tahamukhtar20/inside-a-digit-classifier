@@ -29,16 +29,6 @@ body.journey {
   text-decoration: none;
 }
 
-.jlink {
-  font: 700 0.88rem var(--head);
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.jlink:hover {
-  text-decoration: underline;
-}
-
 .dots {
   display: flex;
   gap: 0.4rem;
@@ -914,9 +904,6 @@ body.journey {
     grid-template-columns: 4.5rem 1fr 5.5rem;
   }
 
-  .jlink {
-    display: none;
-  }
 
   .mini button {
     font-size: 0;
@@ -953,7 +940,6 @@ body.journey {
 
 .btn,
 .linkish,
-.jlink,
 .jbrand,
 .eyebrow,
 .truth-chip,
@@ -969,7 +955,6 @@ body.journey {
 
 .btn,
 .linkish,
-.jlink,
 .jbrand,
 .truth-chip,
 .status,
@@ -1013,11 +998,6 @@ body.journey {
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 760px) {
-  .jlink {
-    display: none;
-  }
-}
 
 /* Three journey cards need room; stack them before they get cramped. */
 @media (max-width: 900px) {

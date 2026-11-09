@@ -4,8 +4,7 @@
 
 1. Feature visualisation: for every filter and hidden unit, the input that excites it most
    (gradient ascent from a blank image, with jitter and an L2 penalty to keep it readable).
-2. Dataset examples: the 4 MNIST test digits that activate each unit most.
-3. Linear probes: for each layer (input, conv 1, conv 2, hidden), linear models trained on
+2. Linear probes: for each layer (input, conv 1, conv 2, hidden), linear models trained on
    frozen activations to read out the digit and three concepts the network was never told about:
    whether the digit has a closed loop, its slant and its stroke thickness.
 """
@@ -193,18 +192,6 @@ def main():
     }
 
     test_x = torch.tensor(load("test_x"), dtype=torch.float32).unsqueeze(1) / 255
-    print("dataset examples…", flush=True)
-    with torch.no_grad():
-        acts = layers(net, test_x)
-    scores = {
-        "conv1": acts["a1"].amax((2, 3)),
-        "conv2": acts["a2"].amax((2, 3)),
-        "hidden": acts["hidden"],
-    }
-    examples = {
-        layer: [[b64(test_x[j, 0].numpy()) for j in s[:, i].topk(4).indices.tolist()] for i in range(s.shape[1])]
-        for layer, s in scores.items()
-    }
 
     print("probes…", flush=True)
     train_x = torch.tensor(load("train_x")[:12000], dtype=torch.float32).unsqueeze(1) / 255
@@ -234,7 +221,7 @@ def main():
             print(f"  {name:9s} {layer:6s} {score:.3f}", flush=True)
     probes["ranges"] = {k: [round(float(v.min()), 3), round(float(v.max()), 3)] for k, v in concepts["train"].items()}
 
-    OUT.write_text(json.dumps({"featvis": featvis, "examples": examples, "probes": probes}, separators=(",", ":")))
+    OUT.write_text(json.dumps({"featvis": featvis, "probes": probes}, separators=(",", ":")))
     print(f"wrote {OUT} ({OUT.stat().st_size // 1024} KB)")
 
 
