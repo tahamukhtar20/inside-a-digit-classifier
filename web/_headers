@@ -1,0 +1,3 @@
+# Model and analysis files only change on redeploy; let browsers keep them for a day.
+/model/*
+  Cache-Control: public, max-age=86400

@@ -1,5 +1,7 @@
 # Inside a Digit Classifier
 
+Live at [digits.tahamukhtar.com](https://digits.tahamukhtar.com).
+
 Draw a digit, then take a guided tour through the small convolutional network reading it. Pick one of three ways in, step through it one idea at a time, and only see its answer at the end:
 
 - **Follow the signal.** Your pixels become 784 numbers, then strokes (layer 1), parts (layer 2), 64 features, and finally votes for ten digits, with animated flows showing the strongest connections on your drawing.
