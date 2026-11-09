@@ -1,0 +1,8 @@
+// Static site on Cloudflare Workers (assets only). Deploy: npx wrangler deploy
+{
+  "name": "digit-classifier",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "./web" },
+  "workers_dev": false,
+  "preview_urls": false
+}

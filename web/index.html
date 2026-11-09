@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Inside a Digit Classifier</title>
+    <meta name="description" content="Draw a digit and watch a small neural network classify it, with live saliency maps, Grad-CAM and every activation on screen." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Plus+Jakarta+Sans:wght@600;800&display=swap" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="intro">
+        <p class="kicker">Interpretability demo</p>
+        <h1>Inside a digit classifier</h1>
+        <p class="lede">
+          Draw a digit. A small convolutional network reads it as you draw, right here in your browser, and shows
+          where it looks, what each layer sees and which digits it's torn between.
+        </p>
+      </header>
+
+      <section class="top">
+        <div class="card pad-card">
+          <div class="card-head"><h2>Draw</h2><span class="hint" id="status">Loading the model…</span></div>
+          <canvas id="pad" class="pad" width="280" height="280" aria-label="Drawing area: draw a digit with your mouse, finger or pen"></canvas>
+          <div class="row">
+            <button class="btn" id="clear" type="button">Clear</button>
+            <button class="btn btn-alt" id="sample" type="button">Random MNIST digit</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Prediction</h2><span class="hint">Click a digit to explain it</span></div>
+          <ol class="bars" id="bars"></ol>
+        </div>
+      </section>
+
+      <section class="card explain">
+        <div class="card-head">
+          <h2>Where it looks</h2>
+          <div class="segmented" role="tablist" aria-label="Attribution method">
+            <button role="tab" data-method="smoothgrad" aria-selected="true">SmoothGrad</button>
+            <button role="tab" data-method="saliency" aria-selected="false">Saliency</button>
+            <button role="tab" data-method="gradTimesInput" aria-selected="false">Gradient × input</button>
+            <button role="tab" data-method="gradcam" aria-selected="false">Grad-CAM</button>
+          </div>
+        </div>
+        <div class="explain-body">
+          <canvas id="heat" class="heat" width="280" height="280" aria-label="Attribution heatmap over the digit"></canvas>
+          <div class="explain-text">
+            <p class="question" id="question">Why does it say <b>?</b></p>
+            <label class="versus">
+              Compared with
+              <select id="versus">
+                <option value="">nothing</option>
+                <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+                <option>5</option><option>6</option><option>7</option><option>8</option><option>9</option>
+              </select>
+            </label>
+            <p class="legend" id="legend"></p>
+            <p class="method-note" id="methodNote"></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2>Inside the network</h2><span class="hint">Brighter means a stronger activation</span></div>
+        <div class="layer">
+          <h3>Layer 1 · 8 filters <small>edges and strokes, 28 × 28</small></h3>
+          <div class="maps" id="maps1"></div>
+        </div>
+        <div class="layer">
+          <h3>Layer 2 · 16 filters <small>parts of digits, 14 × 14</small></h3>
+          <div class="maps maps-small" id="maps2"></div>
+        </div>
+        <div class="layer">
+          <h3>Hidden layer · 64 units <small>the features the final choice is made from</small></h3>
+          <div class="units" id="units"></div>
+        </div>
+      </section>
+
+      <section class="card about">
+        <h2>How it works</h2>
+        <div class="about-grid">
+          <div>
+            <h3>The model</h3>
+            <p>
+              Two 3 × 3 convolution layers (8 and 16 filters, each followed by max-pooling), a 64-unit hidden layer and
+              10 outputs: about 52,000 weights in all. It's trained on MNIST with random shifts, rotations and scaling,
+              because hand-drawn digits are messier than the dataset. <span id="accuracy"></span>
+            </p>
+          </div>
+          <div>
+            <h3>The explanations</h3>
+            <p>
+              <b>Saliency</b> is the gradient of the chosen digit's score with respect to each pixel.
+              <b>SmoothGrad</b> averages that gradient over 24 noisy copies of your drawing, which removes most of
+              the speckle.
+              <b>Gradient × input</b> keeps only the pixels you actually drew. <b>Grad-CAM</b> weights the second
+              layer's maps by how much they matter and projects them back onto the image. With a comparison digit,
+              everything explains the difference between the two scores.
+            </p>
+          </div>
+          <div>
+            <h3>Your drawing</h3>
+            <p>
+              Before it reaches the model, your digit is cropped, scaled to fit 20 × 20 pixels and centred by its
+              centre of mass on a 28 × 28 grid, the same way MNIST was prepared. Nothing leaves your browser.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        Built by Muhammad Taha Mukhtar ·
+        <a href="https://github.com/tahamukhtar20/HandwrittenNumberDetection">Source on GitHub</a>
+      </footer>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
