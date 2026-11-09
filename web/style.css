@@ -824,3 +824,40 @@ h1 {
   margin-left: 0.6rem;
   font: 700 0.9rem var(--head);
 }
+
+/* Grid and flex children may shrink below their content; wide tables scroll inside their box. */
+.probe-grid > *,
+.explain-body > *,
+.top > *,
+.about-grid > * {
+  min-width: 0;
+}
+
+.examples {
+  flex-wrap: wrap;
+}
+
+.insp-examples {
+  min-width: 0;
+}
+
+@media (max-width: 480px) {
+  .examples canvas {
+    width: 60px;
+    height: 60px;
+  }
+
+  .inspector figure canvas {
+    width: 96px;
+    height: 96px;
+  }
+
+  .toc a {
+    font-size: 0.8rem;
+  }
+
+  .segmented button {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.8rem;
+  }
+}

@@ -1,6 +1,7 @@
 /* The guided journey. Builds on style.css (tokens, cards, buttons). */
 
 body.journey {
+  overflow-x: clip; /* entrance animations may overshoot for a moment; never let them scroll the page */
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -224,7 +225,7 @@ body.journey {
   box-shadow: 8px 8px 0 var(--ink);
 }
 
-.path svg {
+.path > svg {
   width: 100%;
   height: 92px;
   border: 2px solid var(--ink);
@@ -246,9 +247,9 @@ body.journey {
   font: 800 0.9rem var(--head);
 }
 
-.path-signal svg { background: #e8f3ff; }
-.path-mind svg { background: #f1ecff; }
-.path-break svg { background: #ffe9f0; }
+.path-signal > svg { background: #e8f3ff; }
+.path-mind > svg { background: #f1ecff; }
+.path-break > svg { background: #ffe9f0; }
 
 /* ---------- step layout ---------- */
 
@@ -482,7 +483,7 @@ body.journey {
   text-align: center;
 }
 
-.ring svg {
+.ring > svg {
   width: 100%;
   max-width: 120px;
 }
@@ -619,7 +620,7 @@ body.journey {
   text-align: center;
 }
 
-.conf svg {
+.conf > svg {
   width: 100%;
   max-width: 200px;
 }
@@ -715,6 +716,8 @@ body.journey {
 
 .big-digit {
   display: grid;
+  width: 100%;
+  max-width: 260px;
   place-items: center;
   aspect-ratio: 1;
   border: 4px solid var(--ink);
@@ -823,29 +826,27 @@ body.journey {
   margin-top: 2rem;
 }
 
-/* ---------- mini drawing ---------- */
+/* ---------- your drawing, in the top bar ---------- */
+
+.jright {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
 
 .mini {
-  position: fixed;
-  right: clamp(0.75rem, 3vw, 1.5rem);
-  bottom: clamp(0.75rem, 3vw, 1.5rem);
-  z-index: 15;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.45rem;
-  border: 3px solid var(--ink);
-  border-radius: 14px;
-  background: var(--paper);
-  box-shadow: var(--shadow-sm);
+  gap: 0.45rem;
   animation: pop 0.4s cubic-bezier(0.2, 1.4, 0.4, 1) both;
 }
 
 .mini canvas {
-  width: 64px;
-  height: 64px;
-  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--ink);
+  border-radius: 7px;
+  background: var(--paper);
   image-rendering: pixelated;
 }
 
@@ -853,9 +854,13 @@ body.journey {
   padding: 0;
   border: 0;
   background: none;
-  font: 700 0.75rem var(--head);
-  text-decoration: underline;
+  color: var(--ink);
+  font: 700 0.85rem var(--head);
   cursor: pointer;
+}
+
+.mini button:hover {
+  text-decoration: underline;
 }
 
 .jfooter {
@@ -900,7 +905,7 @@ body.journey {
 }
 
 @keyframes slam {
-  0% { opacity: 0; transform: scale(2.2) rotate(-8deg); }
+  0% { opacity: 0; transform: scale(1.35) rotate(-6deg); }
   100% { opacity: 1; transform: none; }
 }
 
@@ -956,8 +961,14 @@ body.journey {
     display: none;
   }
 
-  .mini {
-    display: none;
+  .mini button {
+    font-size: 0;
+    gap: 0;
+  }
+
+  .mini button .ico {
+    width: 18px;
+    height: 18px;
   }
 }
 
@@ -974,4 +985,121 @@ body.journey {
 .mini-bar .t,
 .mini-bar .f {
   display: block;
+}
+
+/* ---------- icons and single-line labels ---------- */
+
+.ico {
+  flex: none;
+  vertical-align: -0.18em;
+}
+
+.btn,
+.linkish,
+.jlink,
+.jbrand,
+.eyebrow,
+.truth-chip,
+.status,
+.verdict,
+.path h3,
+.path .go,
+.mini button,
+.how summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.btn,
+.linkish,
+.jlink,
+.jbrand,
+.truth-chip,
+.status,
+.verdict,
+.path .go,
+.key,
+.meter-val,
+.mini-bar span,
+.compare div {
+  white-space: nowrap;
+}
+
+.btn {
+  justify-content: center;
+  text-decoration: none;
+}
+
+.btn.busy {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.how summary {
+  list-style: none;
+}
+
+.how summary::-webkit-details-marker {
+  display: none;
+}
+
+.how[open] summary {
+  margin-bottom: 0.2rem;
+}
+
+.truth-chip {
+  max-width: 100%;
+}
+
+/* Long words in narration never push the layout wider. */
+.say,
+.how p,
+.path p {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .jlink {
+    display: none;
+  }
+}
+
+/* Three journey cards need room; stack them before they get cramped. */
+@media (max-width: 900px) {
+  .paths {
+    grid-template-columns: 1fr;
+    max-width: 30rem;
+  }
+}
+
+@media (max-width: 440px) {
+  .jbrand-text {
+    display: none;
+  }
+
+  .jbar {
+    gap: 0.5rem;
+  }
+
+  .dots {
+    gap: 0.3rem;
+  }
+}
+
+.pad-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.7rem;
+}
+
+.pad-col .pad-box {
+  width: 100%;
+}
+
+@media (max-width: 760px) {
+  .draw-wrap .pad-col {
+    order: -1;
+  }
 }

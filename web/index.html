@@ -13,17 +13,19 @@
   </head>
   <body class="journey">
     <header class="jbar">
-      <a class="jbrand" href="./">Inside a digit classifier</a>
+      <a class="jbrand" href="./" aria-label="Inside a digit classifier, start again"><span class="jbrand-text">Inside a digit classifier</span></a>
       <ol class="dots" id="dots" aria-label="Progress"></ol>
-      <a class="jlink" href="lab.html">Full lab →</a>
+      <div class="jright">
+        <div class="mini" id="mini" hidden aria-label="Your drawing">
+          <canvas id="miniCanvas" width="28" height="28"></canvas>
+          <button type="button" id="redraw">Redraw</button>
+        </div>
+        <a class="jlink" href="lab.html">Full lab</a>
+      </div>
     </header>
 
     <main class="jstage" id="stage" aria-live="polite"></main>
 
-    <aside class="mini" id="mini" hidden aria-label="Your drawing">
-      <canvas id="miniCanvas" width="28" height="28"></canvas>
-      <button type="button" id="redraw">Redraw</button>
-    </aside>
 
     <footer class="footer jfooter">
       Built by Muhammad Taha Mukhtar · <a href="https://github.com/tahamukhtar20/HandwrittenNumberDetection">Source</a> ·

@@ -2,6 +2,7 @@
 // and only then see the answer. All numbers on screen come from the real model.
 
 import { analyse, circuit, loadModel, noMasks, readProbes } from "./model.js";
+import { icon } from "./icons.js";
 import {
   argmax, channelPixels, describeRegion, drawRGBA, fromB64, grayCanvas, hasLoop, heatPixels,
   inputPixels, Pad, pct, plural, slant, thickness, topBy,
@@ -140,17 +141,16 @@ function drawScreen() {
   const s = el("section", { class: "draw-wrap" });
   s.innerHTML = `
     <div class="reveal-in">
-      <p class="eyebrow">An interpretability tour</p>
+      <p class="eyebrow">${icon("scan-eye", 15)} An interpretability tour</p>
       <h1>Draw a digit. Then look inside the network reading it.</h1>
       <p class="say">A small neural network will read your drawing. Before it tells you what it thinks, you'll follow
       what happens inside it, step by step. The answer comes last.</p>
       <div class="draw-actions">
-        <button class="btn btn-big" id="done" type="button" disabled>Done, take me inside →</button>
-        <button class="linkish" id="example" type="button">Use an example</button>
-        <button class="linkish" id="clearPad" type="button">Clear</button>
+        <button class="btn btn-big" id="done" type="button" disabled>Done, take me inside ${icon("arrow-right")}</button>
+        <button class="linkish" id="example" type="button">${icon("shuffle", 16)} Use an example</button>
       </div>
     </div>
-    <div class="pad-box"></div>`;
+    <div class="pad-col"><div class="pad-box"></div><button class="linkish pad-clear" id="clearPad" type="button">${icon("eraser", 16)} Clear</button></div>`;
   const box = s.querySelector(".pad-box");
   box.append(padCanvas);
   const ghost = svg("svg", { class: `ghost ${pad.inked ? "gone" : ""}`, viewBox: "0 0 280 280", "aria-hidden": "true" }, box);
@@ -171,6 +171,7 @@ function drawScreen() {
 async function start() {
   doneBtn.disabled = true;
   doneBtn.textContent = "Reading your drawing…";
+  doneBtn.classList.add("busy");
   await ready;
   const px = pad.pixels();
   const first = analyse(app.model, px, 0);
@@ -186,16 +187,17 @@ async function start() {
     truth: { loop: hasLoop(px), slant: slant(px), thickness: thickness(px) },
   };
   app.masks = noMasks();
-  doneBtn.textContent = "Done, take me inside →";
+  doneBtn.innerHTML = `Done, take me inside ${icon("arrow-right")}`;
+  doneBtn.classList.remove("busy");
   chooseScreen();
 }
 
 // ---------- 2. choose a way in ----------
 
 const JOURNEYS = {
-  signal: { title: "Follow the signal", steps: [signal1, signal2, signal3, signal4, signal5] },
-  mind: { title: "Read its mind", steps: [mind1, mind2, mind3, mind4] },
-  break: { title: "Try to break it", steps: [break1, break2] },
+  signal: { title: "Follow the signal", icon: "activity", steps: [signal1, signal2, signal3, signal4, signal5] },
+  mind: { title: "Read its mind", icon: "brain", steps: [mind1, mind2, mind3, mind4] },
+  break: { title: "Try to break it", icon: "zap", steps: [break1, break2] },
 };
 
 function chooseScreen(exclude = null) {
@@ -203,21 +205,21 @@ function chooseScreen(exclude = null) {
   const s = el("section");
   s.innerHTML = `
     <div class="reveal-in">
-      <p class="eyebrow">Your drawing is in</p>
+      <p class="eyebrow">${icon("check", 15)} Your drawing is in</p>
       <h1>How do you want to look inside?</h1>
       <p class="say">Each way tells a different story about the same drawing. You can try the others afterwards.</p>
     </div>
     <div class="paths">
-      ${pathCard("signal", "Follow the signal", "Watch your pixels turn into strokes, then parts, then features, layer by layer, until it decides.", "5 steps")}
-      ${pathCard("mind", "Read its mind", "Ask what each layer knows about your drawing before it answers: loops, slant, thickness, the digit.", "4 steps")}
-      ${pathCard("break", "Try to break it", "Find the few units its decision rests on and switch them off. Can you change its mind?", "2 steps and a challenge")}
+      ${pathCard("signal", "activity", "Follow the signal", "Watch your pixels turn into strokes, then parts, then features, layer by layer, until it decides.", "5 steps")}
+      ${pathCard("mind", "brain", "Read its mind", "Ask what each layer knows about your drawing before it answers: loops, slant, thickness, the digit.", "4 steps")}
+      ${pathCard("break", "zap", "Try to break it", "Find the few units its decision rests on and switch them off. Can you change its mind?", "2 steps + a challenge")}
     </div>`;
   s.querySelectorAll(".path").forEach((b) => b.addEventListener("click", () => startJourney(b.dataset.j)));
   if (exclude) s.querySelector(`[data-j="${exclude}"]`)?.classList.add("tried");
   show(s);
 }
 
-function pathCard(key, title, text, len) {
+function pathCard(key, ico, title, text, len) {
   const icons = {
     signal: `<svg viewBox="0 0 200 90" aria-hidden="true"><rect x="12" y="25" width="40" height="40" rx="6" fill="#fff" stroke="#111" stroke-width="2.5"/>
       ${[20, 45, 70].map((y) => `<path class="flow" d="M52,45 C80,45 80,${y} 104,${y}" stroke-width="2"/><rect x="104" y="${y - 9}" width="18" height="18" rx="4" fill="#fff" stroke="#111" stroke-width="2"/><path class="flow hot" d="M122,${y} C150,${y} 150,45 168,45" stroke-width="2"/>`).join("")}
@@ -227,7 +229,7 @@ function pathCard(key, title, text, len) {
     break: `<svg viewBox="0 0 200 90" aria-hidden="true">${[18, 45, 72].map((y, k) => `<path class="flow ${k === 1 ? "dead" : "hot"}" d="M40,${y} C90,${y} 110,45 156,45" stroke-width="${k === 1 ? 2 : 3}"/><circle cx="30" cy="${y}" r="9" fill="${k === 1 ? "#ffb3c7" : "#fff"}" stroke="#111" stroke-width="2"/>`).join("")}
       <circle cx="168" cy="45" r="13" fill="#ffd23f" stroke="#111" stroke-width="2.5"/><path d="M96,26 l8,16 h-9 l8,18" fill="none" stroke="#111" stroke-width="3" stroke-linejoin="round"/></svg>`,
   };
-  return `<button class="path path-${key}" data-j="${key}" type="button">${icons[key]}<h3>${title}</h3><p>${text}</p><span class="go">${len} →</span></button>`;
+  return `<button class="path path-${key}" data-j="${key}" type="button">${icons[key]}<h3>${icon(ico, 20)} ${title}</h3><p>${text}</p><span class="go">${len} ${icon("arrow-right", 16)}</span></button>`;
 }
 
 // ---------- 3. steps ----------
@@ -245,16 +247,16 @@ function stepScreen() {
   const s = el("section", { class: "step" });
   const { eyebrow, title, say, visual, how, next } = j.steps[app.step]();
   s.innerHTML = `
-    <div class="reveal-in"><p class="eyebrow">${j.title} · ${app.step + 1} of ${j.steps.length}</p>
+    <div class="reveal-in"><p class="eyebrow">${icon(j.icon, 15)} ${j.title} · step ${app.step + 1} of ${j.steps.length}</p>
       <h2 class="step-title">${title}</h2><p class="say">${say}</p></div>`;
   const v = el("div", { class: "visual" });
   v.append(visual);
   s.append(v);
-  if (how) s.append(el("details", { class: "how" }, `<summary>How is this computed?</summary><p>${how}</p>`));
+  if (how) s.append(el("details", { class: "how" }, `<summary>${icon("info", 16)} How is this computed?</summary><p>${how}</p>`));
   const nav = el("div", { class: "nav" });
-  const back = el("button", { class: "linkish", type: "button" }, app.step === 0 ? "← Choose another way" : "← Back");
+  const back = el("button", { class: "linkish", type: "button" }, `${icon("arrow-left", 16)} ${app.step === 0 ? "Choose another way" : "Back"}`);
   back.addEventListener("click", () => (app.step === 0 ? chooseScreen() : (app.step--, stepScreen())));
-  const fwd = el("button", { class: "btn btn-big", type: "button" }, next ?? (app.step === j.steps.length - 1 ? "Time to guess →" : "Next →"));
+  const fwd = el("button", { class: "btn btn-big", type: "button" }, `${next ?? (app.step === j.steps.length - 1 ? "Time to guess" : "Next")} ${icon("arrow-right")}`);
   fwd.addEventListener("click", () => (app.step < j.steps.length - 1 ? (app.step++, stepScreen()) : guessScreen()));
   nav.append(back, fwd);
   s.append(nav);
@@ -443,7 +445,7 @@ function signal5() {
     say: `Finally, each of the 64 features casts a weighted vote for each of the ten digits. Here are the strongest votes from its 8 strongest features: <b>pink for</b>, <b>blue against</b>. One digit collects far more than the rest, the glowing one. We've hidden the labels. <b>What do you think it picked?</b>`,
     visual: box,
     how: "Each digit's score is the sum over hidden units of activation × weight, plus a bias. A softmax turns the ten scores into probabilities. Line thickness here is activation × weight for each unit-digit pair.",
-    next: "Make your guess →",
+    next: "Make your guess",
   };
 }
 
@@ -510,7 +512,7 @@ function mind1() {
   const left = el("div");
   left.append(
     digitStack((o) => holes.forEach((i, k) => svg("rect", { x: i % 28, y: Math.floor(i / 28), width: 1, height: 1, fill: "#ffd23f", class: "svg-pop", style: `animation-delay:${0.3 + k * 0.004}s` }, o))),
-    el("span", { class: "truth-chip" }, yes ? "Yes, there's a closed loop" : "No closed loop"),
+    el("span", { class: "truth-chip" }, yes ? `${icon("check", 15)} Closed loop` : `${icon("x", 15)} No closed loop`),
   );
   const right = meters(sure.map((s) => ({ fill: s, cls: s >= 0.5 ? "good" : "bad", label: `${Math.round(s * 100)}% ${s >= 0.5 ? '<span class="tick">✓</span>' : '<span class="tick">✗</span>'}` })));
   const firstSure = sure.findIndex((s) => s >= 0.9);
@@ -539,7 +541,7 @@ function mind2() {
       const line = svg("line", { x1: 14, y1: 2, x2: 14, y2: 26, stroke: "#ff508c", "stroke-width": 1.2, "stroke-linecap": "round", style: "transition: transform 1.2s cubic-bezier(.2,.8,.2,1); transform-origin: 14px 14px" }, o);
       later(() => (line.style.transform = `rotate(${angle}deg)`), 300);
     }),
-    el("span", { class: "truth-chip" }, `It ${word} (${s >= 0 ? "+" : ""}${s.toFixed(2)})`),
+    el("span", { class: "truth-chip" }, `${word === "stands upright" ? "Upright" : word === "leans right" ? "Leans right" : "Leans left"} · ${s >= 0 ? "+" : ""}${s.toFixed(2)}`),
   );
   const right = meters(reads.map((r) => ({ mark: to01(r.slant[0]), truth: to01(s), label: `${r.slant[0] >= 0 ? "+" : ""}${r.slant[0].toFixed(2)}` })));
   const err = reads.map((r) => Math.abs(r.slant[0] - s));
@@ -557,7 +559,7 @@ function mind3() {
   const to01 = scaleOf("thickness");
   const scores = app.insights.probes.scores.thickness;
   const left = el("div");
-  left.append(digitStack(), el("span", { class: "truth-chip" }, `Strokes about ${truth.thickness.toFixed(1)} px thick`));
+  left.append(digitStack(), el("span", { class: "truth-chip" }, `Strokes ≈ ${truth.thickness.toFixed(1)} px`));
   const right = meters(reads.map((r) => ({ mark: to01(r.thickness[0]), truth: to01(truth.thickness), label: `${r.thickness[0].toFixed(1)} px` })));
   const forgets = scores[3] < Math.max(scores[1], scores[2]) - 0.2;
   return {
@@ -671,7 +673,7 @@ function break2() {
   left.append(g2);
 
   const R = 70, C = 2 * Math.PI * R;
-  right.innerHTML = `<svg viewBox="0 0 180 180"><circle class="ring-track" cx="90" cy="90" r="${R}"/><circle class="ring-fill" cx="90" cy="90" r="${R}" stroke-dasharray="${C}" stroke-dashoffset="0" style="stroke:#ffd23f;stroke-width:14"/><text class="conf-label" x="90" y="96" text-anchor="middle">100%</text><text class="conf-sub" x="90" y="118" text-anchor="middle">sure of its first answer</text></svg><span class="status" id="brkStatus">Same answer as before</span>`;
+  right.innerHTML = `<svg viewBox="0 0 180 180"><circle class="ring-track" cx="90" cy="90" r="${R}"/><circle class="ring-fill" cx="90" cy="90" r="${R}" stroke-dasharray="${C}" stroke-dashoffset="0" style="stroke:#ffd23f;stroke-width:14"/><text class="conf-label" x="90" y="88" text-anchor="middle">100%</text><text class="conf-sub" x="90" y="108" text-anchor="middle">sure of its</text><text class="conf-sub" x="90" y="123" text-anchor="middle">first answer</text></svg><span class="status" id="brkStatus">${icon("check", 15)} Same answer as before</span>`;
   wrap.append(left, right);
 
   const update = () => {
@@ -681,7 +683,7 @@ function break2() {
     right.querySelector(".conf-label").textContent = `${Math.round(p * 100)}%`;
     const changed = argmax(probs) !== predicted;
     const st = right.querySelector("#brkStatus");
-    st.textContent = changed ? "It changed its mind!" : "Same answer as before";
+    st.innerHTML = changed ? `${icon("zap", 15)} It changed its mind!` : `${icon("check", 15)} Same answer as before`;
     st.classList.toggle("changed", changed);
     app.broken = changed;
   };
@@ -691,7 +693,7 @@ function break2() {
     say: `Click a card to switch that unit off, as if it had never learned anything. The ring shows how sure it still is of its <b>original</b> answer. See if you can make it <b>change its mind</b>. Most networks are surprisingly robust; try the layer-2 filters too.`,
     visual: wrap,
     how: "Switching a unit off multiplies its output by zero everywhere (an ablation). The network is re-run in your browser on every click. The bars under each card show how much that unit pushed towards the original answer.",
-    next: "Reveal its answer →",
+    next: "Reveal its answer",
   };
 }
 
@@ -701,11 +703,11 @@ function guessScreen() {
   const j = JOURNEYS[app.journey];
   const ablated = Object.values(app.masks).some((m) => m.some((v) => v === 0));
   const s = el("section");
-  s.innerHTML = `<div class="reveal-in"><p class="eyebrow">Before the reveal</p>
+  s.innerHTML = `<div class="reveal-in"><p class="eyebrow">${icon("hand", 15)} Before the reveal</p>
     <h1>${ablated ? "What will it say now?" : "What do you think it'll say?"}</h1>
     <p class="say">${ablated ? "With the units you switched off, does it still read your digit the same way?" : "You've seen inside it. Commit to a guess."}</p></div>
     <div class="keypad">${[...Array(10).keys()].map((d) => `<button class="key" type="button" style="animation-delay:${d * 0.04}s">${d}</button>`).join("")}</div>
-    <p style="margin-top:1.4rem"><button class="linkish" id="skip" type="button">Not sure, just show me</button></p>`;
+    <p style="margin-top:1.4rem"><button class="linkish" id="skip" type="button">${icon("circle-help", 16)} Not sure, just show me</button></p>`;
   s.querySelectorAll(".key").forEach((k) => k.addEventListener("click", () => revealScreen(Number(k.textContent))));
   s.querySelector("#skip").addEventListener("click", () => revealScreen(null));
   show(s, { dots: { total: j.steps.length + 2, at: j.steps.length } });
@@ -719,7 +721,7 @@ function revealScreen(guess) {
   const final = ablated ? analyse(app.model, app.data.px, app.data.predicted, null, { masks: app.masks }) : app.data.r;
   const said = argmax(final.probs);
   const s = el("section");
-  s.innerHTML = `<p class="eyebrow">The network says…</p><div class="drum"><span></span><span></span><span></span></div>`;
+  s.innerHTML = `<p class="eyebrow">${icon("sparkles", 15)} The network says…</p><div class="drum"><span></span><span></span><span></span></div>`;
   show(s, { dots: { total: j.steps.length + 2, at: j.steps.length + 1 } });
 
   setTimeout(() => {
@@ -729,8 +731,8 @@ function revealScreen(guess) {
     let verdict = "";
     if (guess !== null) {
       verdict = guess === said
-        ? `<span class="verdict right">You said ${guess}. So did it ✓</span>`
-        : `<span class="verdict wrong">You said ${guess}. It said ${said}.</span>`;
+        ? `<span class="verdict right">${icon("check", 16)} You said ${guess}. So did it.</span>`
+        : `<span class="verdict wrong">${icon("x", 16)} You said ${guess}. It said ${said}.</span>`;
     }
     const bars = [...final.probs]
       .map((p, d) => [d, p])
@@ -748,7 +750,7 @@ function revealScreen(guess) {
     }
     info.innerHTML = `${verdict}<h2 class="step-title">It's ${said === 8 ? "an" : "a"} ${said}, ${Math.round(final.probs[said] * 100)}% sure.</h2>
       <div class="mini-bars" style="margin-top:1rem">${bars}</div>${extra}
-      <div class="why"><div></div><p><b>Why${ablated ? ` its original answer, ${app.data.predicted}` : ""}?</b> It leaned most on <b>${region.where}</b> of your drawing (pink). Blue marks places where more ink would have argued against ${app.data.predicted}.</p></div>`;
+      <div class="why"><div></div><p><b>Why${ablated && said !== app.data.predicted ? ` its original answer, ${app.data.predicted}` : ""}?</b> It leaned most on <b>${region.where}</b> of your drawing (pink). Blue marks places where more ink would have argued against ${app.data.predicted}.</p></div>`;
     info.querySelector(".why div").append(heat);
     drawRGBA(heat, heatPixels(app.data.r.smoothgrad, app.data.px));
     a.append(big, info);
@@ -756,22 +758,26 @@ function revealScreen(guess) {
     const others = Object.keys(JOURNEYS).filter((k) => k !== app.journey);
     const next = el("div", { class: "next-ways" });
     others.forEach((k) => {
-      const b = el("button", { class: "btn", type: "button" }, `Now: ${JOURNEYS[k].title} →`);
+      const b = el("button", { class: "btn", type: "button" }, `${icon(JOURNEYS[k].icon)} ${JOURNEYS[k].title}`);
       b.addEventListener("click", () => startJourney(k));
       next.append(b);
     });
-    const again = el("button", { class: "btn btn-alt", type: "button" }, "Draw another");
+    const again = el("button", { class: "btn btn-alt", type: "button" }, `${icon("pencil")} Draw another`);
     again.addEventListener("click", () => {
       pad.clear();
       drawScreen();
     });
-    next.append(again, el("a", { class: "btn btn-plain", href: "lab.html", style: "text-decoration:none" }, "Open the full lab"));
+    next.append(again, el("a", { class: "btn btn-plain", href: "lab.html" }, `${icon("flask-conical")} Open the full lab`));
 
-    s.replaceChildren(el("p", { class: "eyebrow" }, "The network says"), a, next);
+    s.replaceChildren(el("p", { class: "eyebrow" }, `${icon("sparkles", 15)} The network says`), a, next);
     later(() => s.querySelectorAll(".mini-bar .f").forEach((f) => (f.style.width = `${f.dataset.w}%`)), 400);
   }, 1300);
 }
 
 // ---------- go ----------
+
+document.querySelector(".jbrand").insertAdjacentHTML("afterbegin", icon("scan-eye", 18) + " ");
+document.querySelector(".jlink").innerHTML = `${icon("flask-conical", 16)} Full lab`;
+$("redraw").innerHTML = `${icon("pen-line", 13)} Redraw`;
 
 drawScreen();
