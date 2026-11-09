@@ -1,4 +1,4 @@
-// The guided journey: draw, pick a way in, walk through the network step by step, guess,
+// The guided journey: draw, pick a way in, walk through the network step by step,
 // and only then see the answer. All numbers on screen come from the real model.
 
 import { analyse, circuit, loadModel, noMasks, readProbes } from "./model.js";
@@ -20,7 +20,7 @@ const ready = Promise.all([
   fetch("model/samples.json").then((r) => r.json()),
 ]).then(([model, insights, samples]) => Object.assign(app, { model, insights, samples }));
 
-const app = { model: null, insights: null, samples: null, data: null, journey: null, step: 0, masks: null, guess: null };
+const app = { model: null, insights: null, samples: null, data: null, journey: null, step: 0, masks: null };
 
 // The drawing pad lives across screens so the drawing survives going back.
 const padCanvas = Object.assign(document.createElement("canvas"), { width: 280, height: 280, className: "pad" });
@@ -243,7 +243,7 @@ function startJourney(key) {
 
 function stepScreen() {
   const j = JOURNEYS[app.journey];
-  const total = j.steps.length + 2;
+  const total = j.steps.length + 1;
   const s = el("section", { class: "step" });
   const { eyebrow, title, say, visual, how, next } = j.steps[app.step]();
   s.innerHTML = `
@@ -256,8 +256,8 @@ function stepScreen() {
   const nav = el("div", { class: "nav" });
   const back = el("button", { class: "linkish", type: "button" }, `${icon("arrow-left", 16)} ${app.step === 0 ? "Choose another way" : "Back"}`);
   back.addEventListener("click", () => (app.step === 0 ? chooseScreen() : (app.step--, stepScreen())));
-  const fwd = el("button", { class: "btn btn-big", type: "button" }, `${next ?? (app.step === j.steps.length - 1 ? "Time to guess" : "Next")} ${icon("arrow-right")}`);
-  fwd.addEventListener("click", () => (app.step < j.steps.length - 1 ? (app.step++, stepScreen()) : guessScreen()));
+  const fwd = el("button", { class: "btn btn-big", type: "button" }, `${next ?? (app.step === j.steps.length - 1 ? "See its answer" : "Next")} ${icon("arrow-right")}`);
+  fwd.addEventListener("click", () => (app.step < j.steps.length - 1 ? (app.step++, stepScreen()) : revealScreen()));
   nav.append(back, fwd);
   s.append(nav);
   show(s, { dots: { total, at: app.step } });
@@ -442,10 +442,10 @@ function signal5() {
   svg("text", { x: 520, y: H - 4, "text-anchor": "middle", class: "svg-cap" }, box).append("ten digits, names hidden");
   return {
     title: "Every feature votes, and one digit wins",
-    say: `Finally, each of the 64 features casts a weighted vote for each of the ten digits. Here are the strongest votes from its 8 strongest features: <b>pink for</b>, <b>blue against</b>. One digit collects far more than the rest, the glowing one. We've hidden the labels. <b>What do you think it picked?</b>`,
+    say: `Finally, each of the 64 features casts a weighted vote for each of the ten digits. Here are the strongest votes from its 8 strongest features: <b>pink for</b>, <b>blue against</b>. One digit collects far more than the rest, the glowing one. We've hidden the labels until the end.`,
     visual: box,
     how: "Each digit's score is the sum over hidden units of activation × weight, plus a bias. A softmax turns the ten scores into probabilities. Line thickness here is activation × weight for each unit-digit pair.",
-    next: "Make your guess",
+    next: "See which one it picked",
   };
 }
 
@@ -697,43 +697,21 @@ function break2() {
   };
 }
 
-// ---------- 4. guess ----------
+// ---------- 4. reveal ----------
 
-function guessScreen() {
-  const j = JOURNEYS[app.journey];
-  const ablated = Object.values(app.masks).some((m) => m.some((v) => v === 0));
-  const s = el("section");
-  s.innerHTML = `<div class="reveal-in"><p class="eyebrow">${icon("hand", 15)} Before the reveal</p>
-    <h1>${ablated ? "What will it say now?" : "What do you think it'll say?"}</h1>
-    <p class="say">${ablated ? "With the units you switched off, does it still read your digit the same way?" : "You've seen inside it. Commit to a guess."}</p></div>
-    <div class="keypad">${[...Array(10).keys()].map((d) => `<button class="key" type="button" style="animation-delay:${d * 0.04}s">${d}</button>`).join("")}</div>
-    <p style="margin-top:1.4rem"><button class="linkish" id="skip" type="button">${icon("circle-help", 16)} Not sure, just show me</button></p>`;
-  s.querySelectorAll(".key").forEach((k) => k.addEventListener("click", () => revealScreen(Number(k.textContent))));
-  s.querySelector("#skip").addEventListener("click", () => revealScreen(null));
-  show(s, { dots: { total: j.steps.length + 2, at: j.steps.length } });
-}
-
-// ---------- 5. reveal ----------
-
-function revealScreen(guess) {
+function revealScreen() {
   const j = JOURNEYS[app.journey];
   const ablated = Object.values(app.masks).some((m) => m.some((v) => v === 0));
   const final = ablated ? analyse(app.model, app.data.px, app.data.predicted, null, { masks: app.masks }) : app.data.r;
   const said = argmax(final.probs);
   const s = el("section");
   s.innerHTML = `<p class="eyebrow">${icon("sparkles", 15)} The network says…</p><div class="drum"><span></span><span></span><span></span></div>`;
-  show(s, { dots: { total: j.steps.length + 2, at: j.steps.length + 1 } });
+  show(s, { dots: { total: j.steps.length + 1, at: j.steps.length } });
 
   setTimeout(() => {
     const a = el("div", { class: "answer" });
     const big = el("div", { class: "big-digit", "aria-live": "polite" }, String(said));
     const info = el("div");
-    let verdict = "";
-    if (guess !== null) {
-      verdict = guess === said
-        ? `<span class="verdict right">${icon("check", 16)} You said ${guess}. So did it.</span>`
-        : `<span class="verdict wrong">${icon("x", 16)} You said ${guess}. It said ${said}.</span>`;
-    }
     const bars = [...final.probs]
       .map((p, d) => [d, p])
       .sort((x, y) => y[1] - x[1])
@@ -748,7 +726,7 @@ function revealScreen(guess) {
       extra = `<div class="compare"><div>Untouched: ${orig} (${pct(app.data.r.probs[orig])})</div><div>With your switches: ${said} (${pct(final.probs[said])})</div></div>
         <p class="say">${said !== orig ? "<b>You changed its mind.</b> Those few units were carrying the decision." : `It held on to <b>${orig}</b>. Its knowledge is spread across many units, so knocking out a few isn't enough.`}</p>`;
     }
-    info.innerHTML = `${verdict}<h2 class="step-title">It's ${said === 8 ? "an" : "a"} ${said}, ${Math.round(final.probs[said] * 100)}% sure.</h2>
+    info.innerHTML = `<h2 class="step-title">It's ${said === 8 ? "an" : "a"} ${said}, ${Math.round(final.probs[said] * 100)}% sure.</h2>
       <div class="mini-bars" style="margin-top:1rem">${bars}</div>${extra}
       <div class="why"><div></div><p><b>Why${ablated && said !== app.data.predicted ? ` its original answer, ${app.data.predicted}` : ""}?</b> It leaned most on <b>${region.where}</b> of your drawing (pink). Blue marks places where more ink would have argued against ${app.data.predicted}.</p></div>`;
     info.querySelector(".why div").append(heat);

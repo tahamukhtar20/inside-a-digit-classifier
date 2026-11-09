@@ -659,33 +659,7 @@ body.journey {
   margin-top: 0;
 }
 
-/* ---------- guess and reveal ---------- */
-
-.keypad {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 76px));
-  gap: 0.8rem;
-  margin-top: 1.8rem;
-}
-
-.key {
-  aspect-ratio: 1;
-  border: 3px solid var(--ink);
-  border-radius: 16px;
-  background: var(--paper);
-  box-shadow: var(--shadow-sm);
-  color: var(--ink);
-  font: 800 1.9rem var(--head);
-  cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s;
-  animation: pop 0.4s cubic-bezier(0.2, 1.4, 0.4, 1) both;
-}
-
-.key:hover {
-  background: var(--yellow);
-  transform: translate(-2px, -2px);
-  box-shadow: 5px 5px 0 var(--ink);
-}
+/* ---------- reveal ---------- */
 
 .drum {
   display: flex;
@@ -727,19 +701,6 @@ body.journey {
   font: 800 clamp(6rem, 18vw, 10rem) / 1 var(--head);
   animation: slam 0.7s cubic-bezier(0.2, 1.5, 0.3, 1) both;
 }
-
-.verdict {
-  display: inline-block;
-  margin-bottom: 1rem;
-  padding: 0.35rem 0.9rem;
-  border: 2.5px solid var(--ink);
-  border-radius: 999px;
-  font: 800 1rem var(--head);
-  animation: pop 0.45s 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
-}
-
-.verdict.right { background: var(--mint); }
-.verdict.wrong { background: #ffb3c7; }
 
 .mini-bars {
   display: grid;
@@ -949,10 +910,6 @@ body.journey {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .keypad {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-
   .meter {
     grid-template-columns: 4.5rem 1fr 5.5rem;
   }
@@ -1001,7 +958,6 @@ body.journey {
 .eyebrow,
 .truth-chip,
 .status,
-.verdict,
 .path h3,
 .path .go,
 .mini button,
@@ -1017,9 +973,7 @@ body.journey {
 .jbrand,
 .truth-chip,
 .status,
-.verdict,
 .path .go,
-.key,
 .meter-val,
 .mini-bar span,
 .compare div {

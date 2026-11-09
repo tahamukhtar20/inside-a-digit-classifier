@@ -15,7 +15,7 @@ window.audit = async function audit(W, H = 820) {
   const name = (e) => `${e.tagName.toLowerCase()}${e.id ? "#" + e.id : ""}${e.classList.length ? "." + [...e.classList].join(".") : ""}`;
   const txt = (e) => (e.textContent || "").trim().slice(0, 40);
   const PILLS = ".truth-chip,.status,.verdict,.btn,.key,.eyebrow,.jbrand,.jlink,.go,.linkish,.meter-val,.switch .who,.compare div,.mini-bar span,.meter-name,.dots,.path h3";
-  const CONTAINERS = ".visual,.path,.switch,.card,.mini,.big-digit,.keypad,.meter,.ring,.why,.answer > div";
+  const CONTAINERS = ".visual,.path,.switch,.card,.mini,.big-digit,.meter,.ring,.why,.answer > div";
 
   function check(screen) {
     const win = f.contentWindow;
@@ -72,7 +72,7 @@ window.audit = async function audit(W, H = 820) {
     const j = order[k];
     if (k === 0) click(`[data-j=${j}]`);
     await wait(1300);
-    for (let step = 1; step < 9 && !d.querySelector(".keypad"); step++) {
+    for (let step = 1; step < 9 && d.querySelector(".nav"); step++) {
       check(`${j} step ${step}`);
       if (j === "break" && d.querySelector(".switch")) {
         for (const s of d.querySelectorAll(".switch")) s.click();
@@ -82,9 +82,7 @@ window.audit = async function audit(W, H = 820) {
       click(".nav .btn");
       await wait(1300);
     }
-    check(`${j} guess`);
-    d.querySelectorAll(".key")[3]?.click();
-    await wait(3600);
+    await wait(2400); // the reveal's drumroll and entrance
     check(`${j} reveal`);
     const next = order[k + 1];
     if (next) {

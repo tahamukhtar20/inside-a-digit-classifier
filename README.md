@@ -1,6 +1,6 @@
 # Inside a Digit Classifier
 
-Draw a digit, then take a guided tour through the small convolutional network reading it. Pick one of three ways in, step through it one idea at a time, guess what it will say, and only then see its answer:
+Draw a digit, then take a guided tour through the small convolutional network reading it. Pick one of three ways in, step through it one idea at a time, and only see its answer at the end:
 
 - **Follow the signal.** Your pixels become 784 numbers, then strokes (layer 1), parts (layer 2), 64 features, and finally votes for ten digits, with animated flows showing the strongest connections on your drawing.
 - **Read its mind.** Probes ask what each layer knows before it answers: is there a closed loop, which way does it lean, how thick is the pen, which digit is it.
