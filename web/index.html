@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Inside a Digit Classifier</title>
-    <meta name="description" content="Draw a digit and watch a small neural network classify it, with live saliency maps, Grad-CAM and every activation on screen." />
+    <meta name="description" content="Draw a digit and take apart the small neural network that reads it: attributions, every activation, ablations, live circuits and linear probes, all in your browser." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Plus+Jakarta+Sans:wght@600;800&display=swap" />
@@ -16,9 +16,13 @@
         <p class="kicker">Interpretability demo</p>
         <h1>Inside a digit classifier</h1>
         <p class="lede">
-          Draw a digit. A small convolutional network reads it as you draw, right here in your browser, and shows
-          where it looks, what each layer sees and which digits it's torn between.
+          Draw a digit, then take apart the small neural network reading it: where it looks, what every unit sees,
+          what happens when you switch units off, which circuit produces the answer and what each layer knows.
+          It all runs live in your browser.
         </p>
+        <nav class="toc" aria-label="Sections">
+          <a href="#where">Where it looks</a><a href="#inside">Inside &amp; ablation</a><a href="#circuit">Circuit</a><a href="#probes">Probes</a><a href="#how">How it works</a>
+        </nav>
       </header>
 
       <section class="top">
@@ -34,10 +38,11 @@
         <div class="card">
           <div class="card-head"><h2>Prediction</h2><span class="hint">Click a digit to explain it</span></div>
           <ol class="bars" id="bars"></ol>
+          <p class="ablation-note" id="ablationNote" hidden></p>
         </div>
       </section>
 
-      <section class="card explain">
+      <section class="card explain" id="where">
         <div class="card-head">
           <h2>Where it looks</h2>
           <div class="segmented" role="tablist" aria-label="Attribution method">
@@ -65,8 +70,11 @@
         </div>
       </section>
 
-      <section class="card">
-        <div class="card-head"><h2>Inside the network</h2><span class="hint">Brighter means a stronger activation</span></div>
+      <section class="card" id="inside">
+        <div class="card-head">
+          <h2>Inside the network</h2>
+          <span class="hint">Click any filter or unit to inspect it or switch it off</span>
+        </div>
         <div class="layer">
           <h3>Layer 1 · 8 filters <small>edges and strokes, 28 × 28</small></h3>
           <div class="maps" id="maps1"></div>
@@ -79,9 +87,73 @@
           <h3>Hidden layer · 64 units <small>the features the final choice is made from</small></h3>
           <div class="units" id="units"></div>
         </div>
+        <div class="ablation-bar" id="ablationBar" hidden>
+          <span id="ablationCount"></span>
+          <button class="btn btn-small" id="resetAblation" type="button">Switch all back on</button>
+        </div>
+
+        <div class="inspector" id="inspector" hidden>
+          <div class="inspector-head">
+            <h3 id="inspTitle">Unit</h3>
+            <div class="row-tight">
+              <button class="btn btn-small" id="inspToggle" type="button">Switch off</button>
+              <button class="btn btn-small btn-plain" id="inspClose" type="button" aria-label="Close inspector">Close</button>
+            </div>
+          </div>
+          <div class="inspector-body">
+            <figure>
+              <canvas id="inspNow" width="28" height="28"></canvas>
+              <figcaption>On your drawing</figcaption>
+            </figure>
+            <figure>
+              <canvas id="inspVis" width="28" height="28"></canvas>
+              <figcaption>Input that excites it most</figcaption>
+            </figure>
+            <div class="insp-examples">
+              <div class="examples" id="inspExamples"></div>
+              <p class="figcap">MNIST digits that excite it most</p>
+            </div>
+          </div>
+          <p class="method-note" id="inspNote"></p>
+        </div>
       </section>
 
-      <section class="card about">
+      <section class="card" id="circuit">
+        <div class="card-head">
+          <h2>The circuit behind the answer</h2>
+          <span class="hint" id="circuitHint">The strongest paths into the current score</span>
+        </div>
+        <div class="circuit-wrap"><svg id="circuitSvg" class="circuit" role="img" aria-label="Circuit diagram"></svg></div>
+        <p class="method-note">
+          Each line is one unit's contribution to the next (activation × weight; for layer 1 to layer 2, gradient ×
+          activation). Pink adds to the score, blue takes away, thicker means larger. Click a node to inspect it.
+        </p>
+      </section>
+
+      <section class="card" id="probes">
+        <div class="card-head">
+          <h2>What each layer knows</h2>
+          <span class="hint">Linear probes on frozen activations</span>
+        </div>
+        <p class="method-note probe-intro">
+          A linear probe is a simple model trained to read a property straight out of a layer's activations. The
+          network was only ever trained to name digits. Whether its layers also encode a closed loop, the slant or the
+          stroke thickness shows what it learned along the way.
+        </p>
+        <div class="probe-grid">
+          <div>
+            <h3 class="sub">How well each property can be read out</h3>
+            <div class="probe-chart" id="probeChart"></div>
+          </div>
+          <div>
+            <h3 class="sub">On your drawing</h3>
+            <div class="probe-table-wrap"><table class="probe-table" id="probeTable"></table></div>
+          </div>
+        </div>
+        <p class="takeaway" id="probeTakeaway" hidden></p>
+      </section>
+
+      <section class="card about" id="how">
         <h2>How it works</h2>
         <div class="about-grid">
           <div>
@@ -96,18 +168,18 @@
             <h3>The explanations</h3>
             <p>
               <b>Saliency</b> is the gradient of the chosen digit's score with respect to each pixel.
-              <b>SmoothGrad</b> averages that gradient over 24 noisy copies of your drawing, which removes most of
-              the speckle.
-              <b>Gradient × input</b> keeps only the pixels you actually drew. <b>Grad-CAM</b> weights the second
-              layer's maps by how much they matter and projects them back onto the image. With a comparison digit,
-              everything explains the difference between the two scores.
+              <b>SmoothGrad</b> averages it over 24 noisy copies of your drawing. <b>Gradient × input</b> keeps only
+              the pixels you drew. <b>Grad-CAM</b> weights the second layer's maps by how much they matter. With a
+              comparison digit, everything explains the difference between the two scores.
             </p>
           </div>
           <div>
-            <h3>Your drawing</h3>
+            <h3>Units, ablation, probes</h3>
             <p>
-              Before it reaches the model, your digit is cropped, scaled to fit 20 × 20 pixels and centred by its
-              centre of mass on a 28 × 28 grid, the same way MNIST was prepared. Nothing leaves your browser.
+              Feature visualisations come from gradient ascent on a blank input. Ablation multiplies a unit's output by
+              zero. Probes are logistic or linear models trained on 12,000 MNIST digits' activations and scored on
+              3,000 others. Your drawing is cropped, fitted to 20 × 20 and centred like MNIST. Nothing leaves your
+              browser.
             </p>
           </div>
         </div>
