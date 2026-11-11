@@ -67,3 +67,9 @@ cd training && python export_samples.py && python analysis.py
 ## Deploying
 
 The `web/` folder is a static site. It's set up for Cloudflare Workers static assets (`wrangler.jsonc`): run `npx wrangler deploy`.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
+
+The model is trained on MNIST (Yann LeCun, Corinna Cortes and Christopher Burges), which is available under CC BY-SA 3.0. `web/model/samples.json` contains MNIST test digits and is shared under that license.
